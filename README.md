@@ -106,10 +106,11 @@ Standard library `unittest` — no install required:
 python3 -m unittest discover -s tests -v
 ```
 
-51 tests cover the high-risk surface:
+53 tests cover the high-risk surface:
 - **`core`** — weekday skip, daily roll-over, midnight wrap, one-shot resolution,
   fire-window boundaries, the double-fire guard, snooze-within-window vs.
-  stale-snooze-ages-out, and ring-prompt parsing.
+  stale-snooze-ages-out, snooze as the displayed next-fire time, and ring-prompt
+  parsing.
 - **`store`** — round-trip fidelity, id assignment, removal, that a failed write
   leaves the previous file intact (atomicity), and that a corrupt/hand-edited
   file surfaces a clean error rather than a traceback.

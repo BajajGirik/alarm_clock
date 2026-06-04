@@ -17,7 +17,9 @@ Fire window
 
 Effective target
     ``snoozed_until`` if a snooze is pending, otherwise the scheduled occurrence
-    for the current minute.
+    for the current minute. ``due`` treats any non-``None`` snooze as pending (a
+    just-passed one still fires inside the window); ``next_fire_time``, which
+    only looks forward, treats a snooze as "next" only while it is still future.
 
 Double-fire guard
     ``due()`` compares the occurrence to ``alarm.last_fired``; equal means it has
@@ -123,15 +125,23 @@ def next_occurrence_of(time_str: str, now: datetime) -> datetime:
 def next_fire_time(alarm: Alarm, now: datetime) -> Optional[datetime]:
     """The next datetime this alarm should fire at, given ``now``.
 
-    For display/heartbeat use. Ignores snooze (that is a runtime override
-    handled by ``due``).
+    For display/heartbeat use.
 
-    one-shot  -> ``alarm.when`` if still in the future, else ``None`` (spent)
-    recurring -> soonest future datetime whose ``HH:MM`` matches *and* whose
-                 weekday is in ``alarm.days`` (handles midnight / week wrap)
+    pending snooze -> ``alarm.snoozed_until`` if it is still in the future
+    one-shot       -> ``alarm.when`` if still in the future, else ``None`` (spent)
+    recurring      -> soonest future datetime whose ``HH:MM`` matches *and* whose
+                      weekday is in ``alarm.days`` (handles midnight / week wrap)
+
+    A *future* snooze takes precedence over the regular schedule. Only a future
+    snooze, though: a snooze whose time has already passed is left to ``due``
+    (which still fires it within the window) rather than shown as "next".
     """
     if not alarm.enabled:
         return None
+
+    # A pending snooze is the actual next fire time.
+    if alarm.snoozed_until is not None and alarm.snoozed_until > now:
+        return alarm.snoozed_until
 
     if alarm.is_one_shot:
         if alarm.when is not None and alarm.when > now:

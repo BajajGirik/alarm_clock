@@ -58,7 +58,10 @@ def _heartbeat(alarms: list[Alarm], now: datetime) -> str:
         return "no upcoming alarms — waiting (Ctrl-C to quit)"
     nxt, a = min(upcoming, key=lambda pair: pair[0])
     label = a.label or "(no label)"
-    return f"next: {label} at {a.time} (in {_format_delta(nxt - now)})"
+    # `a.time` is the scheduled HH:MM; when snoozed the real fire time is `nxt`.
+    # We keep showing the scheduled time and tag it, matching `alarm list`.
+    snoozed = " (snoozed)" if a.snoozed_until else ""
+    return f"next: {label} at {a.time}{snoozed} (in {_format_delta(nxt - now)})"
 
 
 def ring(alarm: Alarm, input_fn=input, output=sys.stdout) -> core.Action:

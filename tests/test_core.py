@@ -137,6 +137,23 @@ class TestSnooze(unittest.TestCase):
         a = recurring("07:30", DAILY, snoozed_until=snooze)
         self.assertFalse(core.due(a, datetime(2026, 6, 3, 7, 50, 0)))
 
+    def test_next_fire_time_returns_snooze_not_schedule(self):
+        # After snoozing, heartbeat should show snooze time, not next regular occurrence.
+        snooze = datetime(2026, 6, 3, 7, 35)
+        a = recurring("07:30", DAILY, snoozed_until=snooze)
+        now = datetime(2026, 6, 3, 7, 30, 45)
+        self.assertEqual(core.next_fire_time(a, now), snooze)
+
+    def test_pending_alarm_earlier_than_snooze_fires_first(self):
+        # Alarm A at 11:35 snoozed 6 min -> 11:41. Alarm B pending at 11:40.
+        # Heartbeat min() should pick B (11:40) as the next alarm.
+        now = datetime(2026, 6, 3, 11, 36, 0)
+        snoozed = recurring("11:35", DAILY, snoozed_until=datetime(2026, 6, 3, 11, 41))
+        pending = recurring("11:40", DAILY)
+        nxt_snoozed = core.next_fire_time(snoozed, now)
+        nxt_pending = core.next_fire_time(pending, now)
+        self.assertEqual(min(nxt_snoozed, nxt_pending), datetime(2026, 6, 3, 11, 40))
+
     def test_one_shot_snoozable(self):
         when = datetime(2026, 6, 3, 7, 30)
         snooze = datetime(2026, 6, 3, 7, 35)
